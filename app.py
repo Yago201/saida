@@ -15,4 +15,4 @@ app.register_blueprint(ponto_bp, url_prefix='/api')
 
 if __name__ == '__main__':
     porta = int(os.getenv("PORT", 5000))
-    app.run(debug=True, port=porta)
+    app.run(host="0.0.0.0", port=porta)
