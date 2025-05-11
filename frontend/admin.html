@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Ponto - Admin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2, h3 {
+      text-align: center;
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .export-buttons {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead {
+        display: none;
+      }
+      tr {
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 6px;
+        background: #f1f1f1;
+      }
+      td {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border: none;
+      }
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Cadastro de Funcionário (Admin)</h2>
+    <div>
+      <input type="number" id="novo-id" placeholder="ID do Funcionário">
+      <input type="text" id="novo-nome" placeholder="Nome do Funcionário">
+      <button onclick="cadastrarFuncionario()">Cadastrar Funcionário</button>
+      <p id="mensagem-admin"></p>
+    </div>
+
+    <h2>Registro de Ponto</h2>
+    <div>
+      <input type="number" id="id-funcionario" placeholder="Digite seu ID">
+      <button onclick="registrarEntrada()">Registrar Entrada</button>
+      <button onclick="registrarSaida()">Registrar Saída</button>
+      <p id="mensagem"></p>
+    </div>
+
+    
+
+    <h3>Registros Recentes</h3>
+    <div>
+      <label for="filtro-data"><strong>Filtrar por Data:</strong></label>
+      <input type="date" id="filtro-data">
+      <button onclick="filtrarPorData()">Filtrar</button>
+      <button onclick="listarRegistros()">Limpar Filtro</button>
+    </div>
+
+    <div class="export-buttons">
+      <button onclick="listarRegistros()">Atualizar Lista</button>
+      <button onclick="exportarExcel()">Exportar Excel</button>
+      <button onclick="exportarPDF()">Exportar PDF</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Entrada</th>
+          <th>Saída</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-registros"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API = 'http://localhost:5000/api';
+
+    async function cadastrarFuncionario() {
+      const id = document.getElementById('novo-id').value;
+      const nome = document.getElementById('novo-nome').value;
+      if (!id || !nome) {
+        document.getElementById('mensagem-admin').innerText = 'Preencha todos os campos!';
+        return;
+      }
+      const res = await fetch(`${API}/funcionarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: parseInt(id), nome })
+      });
+      const data = await res.json();
+      document.getElementById('mensagem-admin').innerText = data.message || data.error;
+    }
+
+    async function registrarEntrada() {
+      const id = document.getElementById('id-funcionario').value;
+      if (!id) return alert('Digite seu ID');
+      const res = await fetch(`${API}/entrada`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ funcionario_id: id })
+      });
+      const data = await res.json();
+      document.getElementById('mensagem').innerText = data.message || data.error;
+      listarRegistros();
+    }
+
+    async function registrarSaida() {
+      const id = document.getElementById('id-funcionario').value;
+      if (!id) return alert('Digite seu ID');
+      const res = await fetch(`${API}/saida`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ funcionario_id: id })
+      });
+      const data = await res.json();
+      document.getElementById('mensagem').innerText = data.message || data.error;
+      listarRegistros();
+    }
+
+    async function listarRegistros() {
+      const res = await fetch(`${API}/registros`);
+      const registros = await res.json();
+      preencherTabela(registros);
+    }
+
+    async function filtrarPorData() {
+      const data = document.getElementById('filtro-data').value;
+      if (!data) return alert('Selecione uma data!');
+      const res = await fetch(`${API}/registros?data=${data}`);
+      const registros = await res.json();
+      preencherTabela(registros);
+    }
+
+    function preencherTabela(registros) {
+      const tabela = document.getElementById('tabela-registros');
+      tabela.innerHTML = '';
+      registros.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td data-label="ID">${r.funcionario_id}</td>
+          <td data-label="Nome">${r.nome || '(sem nome)'}</td>
+          <td data-label="Entrada">${r.horario_entrada || '-'}</td>
+          <td data-label="Saída">${r.horario_saida || '-'}</td>
+        `;
+        tabela.appendChild(tr);
+      });
+    }
+
+    function exportarExcel() {
+      window.open(`${API}/exportar-excel`, '_blank');
+    }
+
+    function exportarPDF() {
+      window.open(`${API}/exportar-pdf`, '_blank');
+    }
+
+    window.onload = listarRegistros;
+  </script>
+</body>
+</html>

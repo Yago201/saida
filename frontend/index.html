@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ponto do Funcionário</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 30px;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 12px;
+      margin: 10px 0;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #218838;
+    }
+    .saida-btn {
+      background: #dc3545;
+    }
+    .saida-btn:hover {
+      background: #c82333;
+    }
+    #mensagem {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Registro de Ponto</h2>
+    <input type="number" id="id-funcionario" placeholder="Digite seu ID" />
+    <button onclick="registrarEntrada()">Registrar Entrada</button>
+    <button class="saida-btn" onclick="registrarSaida()">Registrar Saída</button>
+    <p id="mensagem"></p>
+  </div>
+
+  <script>
+  const API = 'https://seu-backend.onrender.com/api';
+
+
+
+    async function registrarEntrada() {
+      const id = document.getElementById("id-funcionario").value;
+      if (!id) return alert("Digite seu ID");
+
+      const res = await fetch(`${API}/entrada`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ funcionario_id: id })
+      });
+
+      const data = await res.json();
+      document.getElementById("mensagem").innerText = data.message || data.error;
+    }
+
+    async function registrarSaida() {
+      const id = document.getElementById("id-funcionario").value;
+      if (!id) return alert("Digite seu ID");
+
+      const res = await fetch(`${API}/saida`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ funcionario_id: id })
+      });
+
+      const data = await res.json();
+      document.getElementById("mensagem").innerText = data.message || data.error;
+    }
+  </script>
+</body>
+</html>
