@@ -26,3 +26,30 @@ if __name__ == '__main__':
     porta = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=porta)
 
+from flask import Flask, send_from_directory
+from flask_cors import CORS
+from routes.ponto import ponto_bp
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__, static_folder='templates')
+CORS(app)
+
+# Registrar rotas da API
+app.register_blueprint(ponto_bp, url_prefix='/api')
+
+# Rota principal → index.html (funcionário)
+@app.route('/')
+def index():
+    return send_from_directory('templates', 'index.html')
+
+# Rota /admin → admin.html
+@app.route('/admin')
+def admin():
+    return send_from_directory('templates', 'admin.html')
+
+if __name__ == '__main__':
+    porta = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=porta)
